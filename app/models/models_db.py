@@ -1,5 +1,6 @@
 """Модели SQLAlchemy для таблиц базы данных."""
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, func
 from app.database.connection import Base
 from sqlalchemy.orm import relationship
 
@@ -14,6 +15,14 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
 
     charts = relationship("Chart", back_populates="user")
+    uploads = relationship(
+        "UserDataItem",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<User(id={self.id}, username='{self.username}')>"
 
 
 class Organization(Base):
@@ -25,6 +34,9 @@ class Organization(Base):
 
     charts = relationship("Chart", back_populates="organization")
 
+    def __repr__(self):
+        return f"<Organization(id={self.id}, name='{self.name}')>"
+
 
 class Chart(Base):
     __tablename__ = "charts"
@@ -32,11 +44,47 @@ class Chart(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    chart_type = Column(String, nullable=False)  # тип графика, например, "bar", "line", "pie" и т.д. мб пригодится, если что, вырежем
-    created_at = Column(DateTime, nullable=False)  # временная метка создания графика
-    updated_at = Column(DateTime, nullable=False)  # временная метка последнего обновления графика, изначально равна created_at
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # внешний ключ на таблицу users, показывает создателя графика
-    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)  # по аналогии
+    chart_type = Column(String, nullable=False)  # тип графика, например, "bar", "line", "pie" и т.д.
+    created_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False, index=True)
 
     user = relationship("User", back_populates="charts")
     organization = relationship("Organization", back_populates="charts")
+
+    def __repr__(self):
+        return f"<Chart(id={self.id}, title='{self.title}')>"
+
+
+class DataItem(Base):  # возможно потом будет реализовано, метаданные о файлах, загруженных юзерами
+    __tablename__ = "data_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String, nullable=False)
+    file_size = Column(Integer, nullable=True)
+    content_type = Column(String, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    uploads = relationship(
+        "UserDataItem",
+        back_populates="data_item",
+        cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<DataItem(id={self.id}, filename='{self.filename}')>"
+
+
+class UserDataItem(Base):
+    __tablename__ = "user_data_items"
+
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    data_id = Column(Integer, ForeignKey("data_items.id"), primary_key=True)
+    uploaded_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    user = relationship("User", back_populates="uploads")
+    data_item = relationship("DataItem", back_populates="uploads")
+
+    def __repr__(self):
+        return f"<UserDataItem(user_id={self.user_id}, data_id={self.data_id}, uploaded_at={self.uploaded_at})>"
