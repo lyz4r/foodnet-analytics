@@ -1,3 +1,6 @@
+# TODO: исправить всё плохое
+# что плохо: 1) все содержание функции в защищенном блоке try-except, 2) нет логирования ошибок, 3) нет проверки входных данных (типизации),
+# 4)бесконечные if else, сделай это изящнее, 5) нет проверки на наличие необходимых полей в данных
 from fastapi import FastAPI, Body, HTTPException
 from pydantic import BaseModel, ConfigDict
 from typing import List, Dict, Optional
@@ -6,6 +9,7 @@ import pandas as pd
 
 app = FastAPI(title="FoodNet Analytics Graph Service")
 
+
 class ChartData(BaseModel):
     data: List[Dict[str, str | float]]  # Строки для date, числа для calories
     chart_type: str
@@ -13,6 +17,7 @@ class ChartData(BaseModel):
     y_field: str
     color_field: Optional[str] = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
 
 @app.post("/generate_chart")
 async def generate_chart(chart_data: ChartData = Body(...)):
