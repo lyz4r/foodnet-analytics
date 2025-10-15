@@ -1,11 +1,15 @@
 import jwt
 from app.config.settings import config
-from app.database.utils import get_user
+from app.database.connection import get_db
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from app.models.schemas import UserInDB
+from app.models.models import User
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.middleware.logging import logger
 
 
 oauth2pb = OAuth2PasswordBearer(tokenUrl="login", auto_error=True)
@@ -13,11 +17,24 @@ auth_headers = {"WWW-Authenticate": "Bearer"}
 ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-async def auth_user(current_user: OAuth2PasswordRequestForm = Depends()) -> UserInDB:
-    user = await get_user(current_user.username)
+async def get_user_by_username(
+    username: str,
+    db: AsyncSession
+) -> User | None:
+    result = await db.execute(select(User).where(User.username == username))
+    return result.scalars().first()
+
+
+async def auth_user(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    user = await get_user_by_username(form_data.username, db)
     if not user:
+        logger.warning(f"User not found: {form_data.username}")
         raise HTTPException(status_code=404, detail="User not found", headers=auth_headers)
-    if not ctx.verify(current_user.password, user.hashed_password):
+    if not ctx.verify(form_data.password, user.hashed_password):
+        logger.warning(f"Invalid password for {form_data.username}")
         raise HTTPException(status_code=401, detail="Authorization failed", headers=auth_headers)
     return user
 
@@ -40,7 +57,7 @@ def get_access_token(token: str | None = Depends(oauth2pb)) -> str | None:
 
 async def get_user_from_jwt(token: str | None = Depends(get_access_token)) -> UserInDB:
     payload = decode_jwt(token)
-    user = await get_user(payload['sub'])
+    user = await get_user_by_username(payload['sub'])
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
