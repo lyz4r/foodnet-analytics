@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
-from app.config.settings import settings
+from app.config.settings import config
 
 
 class Base(DeclarativeBase):
@@ -8,7 +8,7 @@ class Base(DeclarativeBase):
 
 
 engine = create_async_engine(
-    settings.DATABASE_URL,  # берём строку подключения из настроек (.env)
+    config.DATABASE_URL,  # берём строку подключения из настроек (.env)
     echo=False,             # Можно сделать True для детального логирования запросов
     pool_size=10,
     max_overflow=20,

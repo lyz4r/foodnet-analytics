@@ -6,7 +6,7 @@ from app.middleware.logging import logger
 from app.database.connection import Base, engine
 from uuid import uuid4, UUID
 from typing import Tuple
-from app.models.models_db import UserDataItem
+from app.models.models import UserDataItem
 from app.database.connection import async_session
 
 
