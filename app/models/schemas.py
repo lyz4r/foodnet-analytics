@@ -1,28 +1,30 @@
 """Модели Pydantic для API."""
-from pydantic import BaseModel, EmailStr, field_validator, Field
-from typing import Optional, List
-from datetime import datetime
+from pydantic import BaseModel, EmailStr, field_validator, Field, ConfigDict
+from typing import Optional, List, Dict, Any
 
 
-class ChartBase(BaseModel):
-    title: str
-    description: Optional[str] = None
+class ChartData(BaseModel):
+    data: List[Dict[str, Any]]
     chart_type: str
+    x_field: str
+    y_field: str
+    color_field: Optional[str] = None
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    @field_validator("chart_type")
+    @classmethod
+    def validate_chart_type(cls, v: str) -> str:
+        allowed_types = {"line", "bar", "scatter", "pie"}
+        if v not in allowed_types:
+            raise ValueError(f"Тип графика должен быть одним из {allowed_types}, получено '{v}'")
+        return v
 
-class ChartCreate(ChartBase):
-    organization_id: int
-
-
-class ChartOut(ChartBase):
-    id: int
-    created_at: datetime
-    updated_at: datetime
-    user_id: int
-    organization_id: int
-
-    class Config:
-        from_attributes = True
+    @field_validator("data")
+    @classmethod
+    def validate_data_not_empty(cls, v: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        if not v:
+            raise ValueError("Данные не могут быть пустыми")
+        return v
 
 
 class OrganizationBase(BaseModel):
@@ -33,9 +35,7 @@ class OrganizationBase(BaseModel):
 class OrganizationOut(OrganizationBase):
     id: int
     users: List[int] = []
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class UserBase(BaseModel):
@@ -58,9 +58,7 @@ class UserResponce(UserBase):
     id: int
     is_admin: bool = False
     organizations: List[int] = []
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class UserInDB(UserBase):
