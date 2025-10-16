@@ -2,7 +2,7 @@ from app.database.utils import get_user
 from fastapi import Depends, APIRouter, HTTPException, Request
 from .utils import get_rate_limit_by_role, limiter
 from .rbac import PermissionChecker
-from app.models.schemas import UserBase, UserCreate, UserInDB, Token
+from app.models.schemas import UserBase, UserCreate, Token
 from app.models.models import User
 from .security import auth_user, create_jwt, get_user_from_jwt, create_hashed_password, get_access_token, get_user_by_username
 from app.database.connection import get_db
