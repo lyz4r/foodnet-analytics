@@ -41,7 +41,7 @@ async def upload_csv(name: str = "blank", user_id: int = -1, file: UploadFile = 
         logger.error(f"Ошибка парсинга CSV файла {file.filename}: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Ошибка парсинга CSV: {str(e)}")
     data_id, df_len = await load_df_to_db(name, uuid4(), df)
-    add_to_UserDataItem(user_id, data_id)
+    await add_to_UserDataItem(user_id, data_id)
     return {"data_id": data_id, "rows": df_len, "preview": df.head().to_dict(orient="records")}
 
 

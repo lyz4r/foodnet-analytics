@@ -56,14 +56,14 @@ class UserCreate(UserBase):
 
 class UserResponce(UserBase):
     id: int
-    is_admin: bool
+    is_admin: bool = False
     organizations: List[int] = []
 
     class Config:
         from_attributes = True
 
 
-class UserInDB(UserResponce):
+class UserInDB(UserBase):
     hashed_password: str = Field(exclude=True)
 
 

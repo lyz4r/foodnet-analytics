@@ -4,7 +4,8 @@ from app.database.connection import get_db
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
+# from pwdlib.hashers.bcrypt import BcryptHasher
 from app.models.schemas import UserInDB
 from app.models.models import User
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +15,8 @@ from app.middleware.logging import logger
 
 oauth2pb = OAuth2PasswordBearer(tokenUrl="login", auto_error=True)
 auth_headers = {"WWW-Authenticate": "Bearer"}
-ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+ctx = PasswordHash.recommended()
 
 
 async def get_user_by_username(
@@ -53,6 +55,10 @@ def decode_jwt(token: str | None) -> dict:
 
 def get_access_token(token: str | None = Depends(oauth2pb)) -> str | None:
     return token
+
+
+def create_hashed_password(password: str) -> str:
+    return ctx.hash(password)
 
 
 async def get_user_from_jwt(token: str | None = Depends(get_access_token)) -> UserInDB:

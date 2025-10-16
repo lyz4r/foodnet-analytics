@@ -60,7 +60,7 @@ class Chart(Base):
 class DataItem(Base):  # возможно потом будет реализовано, метаданные о файлах, загруженных юзерами
     __tablename__ = "data_items"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String, primary_key=True)
     filename = Column(String, nullable=False)
     file_size = Column(Integer, nullable=True)
     content_type = Column(String, nullable=True)
@@ -80,7 +80,7 @@ class UserDataItem(Base):
     __tablename__ = "user_data_items"
 
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    data_id = Column(Integer, ForeignKey("data_items.id"), primary_key=True)
+    data_id = Column(String, ForeignKey("data_items.id"), primary_key=True)
     uploaded_at = Column(DateTime, nullable=False, server_default=func.now())
 
     user = relationship("User", back_populates="uploads")
